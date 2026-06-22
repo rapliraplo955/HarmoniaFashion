@@ -900,93 +900,7 @@ let wishlistIds=new Set();
 let searchQuery='';
 
 const CS_WHATSAPP='6281234567890';
-const { data: profile } =
-await supabase
-.from('admin_profiles')
-.select('*')
-.eq('id', data.user.id)
-.single();
-
-if(!profile){
-   alert('Bukan admin');
-   return;
-}
-
-currentUser = {
-   id: data.user.id,
-   email: data.user.email,
-   name: profile.full_name,
-   role: 'admin'
-};
-
-saveSession(currentUser);
-
-closeAuthModal();
-
-renderNavAuthArea();
-console.log(currentUser);
-enterAdminPanel();
-
-
-async function checkAdmin(){
-
- const { data } =
- await supabase.auth.getUser();
-
- if(!data.user){
-   return false;
- }
-
- const { data: profile } =
- await supabase
- .from('admin_profiles')
- .select('*')
- .eq('id', data.user.id)
- .single();
-
- return !!profile;
-}
-
-async function logoutAdmin(){
-
- await supabase.auth.signOut();
-
- localStorage.removeItem(
-   'adminLoggedIn'
- );
-
- 
-}
-
-async function restoreAdminSession(){
-
-  const { data } =
-  await supabase.auth.getUser();
-
-  if(!data.user) return;
-
-  const { data: profile } =
-  await supabase
-  .from('admin_profiles')
-  .select('*')
-  .eq('id', data.user.id)
-  .single();
-
-  if(!profile) return;
-
-  currentUser = {
-    id: data.user.id,
-    email: data.user.email,
-    name: profile.full_name,
-    role: 'admin'
-  };
-
-  renderNavAuthArea();
-
-  enterAdminPanel();
-}
-
-await restoreAdminSession();
+const ADMIN_ACCOUNTS=[{username:'admin',password:'admin123',name:'Administrator'}];
 
 /* ============ COLOR MAPS ============ */
 const COLOR_LABELS={black:'Hitam',white:'Putih',brown:'Cokelat / Tan',beige:'Nude / Beige',red:'Merah',navy:'Navy',gold:'Emas / Gold',silver:'Silver'};
@@ -1279,34 +1193,12 @@ async function handleLogin(e) {
   const username=document.getElementById('authUsername').value.trim();
   const password=document.getElementById('authPassword').value;
   if(!username||!password){showAuthError('Username dan kata sandi wajib diisi.');return false;}
-  if(authMode === 'admin') {
-
-  const email = username;
-
-  const { data, error } =
-    await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-  if(error){
-    showAuthError(error.message);
-    return false;
+  if(authMode==='admin'){
+    const admin=ADMIN_ACCOUNTS.find(a=>a.username.toLowerCase()===username.toLowerCase()&&a.password===password);
+    if(!admin){showAuthError('Username atau kata sandi Admin salah.');return false;}
+    currentUser={username:admin.username,name:admin.name,role:'admin'};
+    saveSession(currentUser); closeAuthModal(); renderNavAuthArea(); enterAdminPanel(); return false;
   }
-
-  currentUser = {
-    id: data.user.id,
-    email: data.user.email,
-    role: 'admin'
-  };
-
-  saveSession(currentUser);
-  closeAuthModal();
-  renderNavAuthArea();
-  enterAdminPanel();
-
-  return false;
-}
   const {data:existing,error:fetchErr}=await sb.from('customer_users').select('*').eq('username',username.toLowerCase()).single();
   if(fetchErr&&fetchErr.code!=='PGRST116'){showAuthError('Terjadi kesalahan. Coba lagi.');return false;}
   if(existing){
@@ -1685,34 +1577,19 @@ document.addEventListener('click',e=>{const sb2=document.getElementById('sidebar
 /* ============================================================
    ADMIN PANEL
    ============================================================ */
-function enterAdminPanel(){
+function enterAdminPanel(){if(!currentUser||currentUser.role!=='admin')return;document.body.classList.add('admin-mode');document.getElementById('adminShell').classList.add('open');document.body.style.overflow='';setAdminPage('dashboard');window.scrollTo({top:0});}
+function exitAdminPanel(){document.body.classList.remove('admin-mode');document.getElementById('adminShell').classList.remove('open');}
 
-  console.log('ENTER ADMIN');
-
-  console.log(currentUser);
-
-  console.log(
-    document.getElementById('adminShell')
-  );
-
-  if(!currentUser){
-    console.log('NO USER');
-    return;
-  }
-
-  if(currentUser.role!=='admin'){
-    console.log('NOT ADMIN');
-    return;
-  }
-
-  document.body.classList.add('admin-mode');
-
-  document.getElementById('adminShell')
-  .classList.add('open');
-
-  setAdminPage('dashboard');
+function setAdminPage(page){
+  adminCurrentPage=page;
+  document.querySelectorAll('.admin-nav-item[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  const main=document.getElementById('adminMain');
+  if(page==='dashboard') main.innerHTML=renderAdminDashboard();
+  else if(page==='products') main.innerHTML=renderAdminProducts();
+  else if(page==='categories') main.innerHTML=renderAdminCategories();
+  else if(page==='stores') main.innerHTML=renderAdminStores();
+  else if(page==='reviews') main.innerHTML=renderAdminReviews();
 }
-
 
 function renderAdminDashboard(){
   const totalReviews=STORES.reduce((a,s)=>a+(storeComments[s.id]?storeComments[s.id].length:0),0);
