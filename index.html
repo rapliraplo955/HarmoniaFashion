@@ -1261,12 +1261,34 @@ async function handleLogin(e) {
   const username=document.getElementById('authUsername').value.trim();
   const password=document.getElementById('authPassword').value;
   if(!username||!password){showAuthError('Username dan kata sandi wajib diisi.');return false;}
-  if(authMode==='admin'){
-    const admin=ADMIN_ACCOUNTS.find(a=>a.username.toLowerCase()===username.toLowerCase()&&a.password===password);
-    if(!admin){showAuthError('Username atau kata sandi Admin salah.');return false;}
-    currentUser={username:admin.username,name:admin.name,role:'admin'};
-    saveSession(currentUser); closeAuthModal(); renderNavAuthArea(); enterAdminPanel(); return false;
+  if(authMode === 'admin') {
+
+  const email = username;
+
+  const { data, error } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+  if(error){
+    showAuthError(error.message);
+    return false;
   }
+
+  currentUser = {
+    id: data.user.id,
+    email: data.user.email,
+    role: 'admin'
+  };
+
+  saveSession(currentUser);
+  closeAuthModal();
+  renderNavAuthArea();
+  enterAdminPanel();
+
+  return false;
+}
   const {data:existing,error:fetchErr}=await sb.from('customer_users').select('*').eq('username',username.toLowerCase()).single();
   if(fetchErr&&fetchErr.code!=='PGRST116'){showAuthError('Terjadi kesalahan. Coba lagi.');return false;}
   if(existing){
