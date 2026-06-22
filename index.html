@@ -900,7 +900,75 @@ let wishlistIds=new Set();
 let searchQuery='';
 
 const CS_WHATSAPP='6281234567890';
-const ADMIN_ACCOUNTS=[{username:'admin',password:'admin123',name:'Administrator'}];
+async function adminLogin(){
+
+ const email =
+ document.getElementById('adminEmail').value;
+
+ const password =
+ document.getElementById('adminPassword').value;
+
+ const { data, error } =
+ await supabase.auth.signInWithPassword({
+   email,
+   password
+ });
+
+ if(error){
+   alert(error.message);
+   return;
+ }
+
+ const { data: profile } =
+ await supabase
+ .from('admin_profiles')
+ .select('*')
+ .eq('id', data.user.id)
+ .single();
+
+ if(!profile){
+    alert('Bukan admin');
+    return;
+ }
+
+ localStorage.setItem(
+   'adminLoggedIn',
+   'true'
+ );
+
+ location.reload();
+}
+
+
+async function checkAdmin(){
+
+ const { data } =
+ await supabase.auth.getUser();
+
+ if(!data.user){
+   return false;
+ }
+
+ const { data: profile } =
+ await supabase
+ .from('admin_profiles')
+ .select('*')
+ .eq('id', data.user.id)
+ .single();
+
+ return !!profile;
+}
+
+async function logoutAdmin(){
+
+ await supabase.auth.signOut();
+
+ localStorage.removeItem(
+   'adminLoggedIn'
+ );
+
+ location.reload();
+}
 
 /* ============ COLOR MAPS ============ */
 const COLOR_LABELS={black:'Hitam',white:'Putih',brown:'Cokelat / Tan',beige:'Nude / Beige',red:'Merah',navy:'Navy',gold:'Emas / Gold',silver:'Silver'};
