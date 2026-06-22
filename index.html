@@ -123,21 +123,57 @@
     .btn-detail:hover { background: var(--charcoal); }
     .empty-state { grid-column: 1 / -1; text-align: center; padding: 50px 20px; color: #999; font-size: 13px; border: 1px dashed #ddd6cc; letter-spacing: 0.03em; }
 
-    /* ── STORES ── */
+    /* ── SEARCH BAR ── */
+    .search-bar-wrap { background: var(--charcoal); padding: 12px 48px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; gap: 12px; }
+    .search-input-wrap { flex: 1; max-width: 560px; position: relative; }
+    .search-input { width: 100%; background: #1a1a1a; border: 1px solid #3a3a3a; color: var(--white); font-family: 'Jost', sans-serif; font-size: 13px; letter-spacing: 0.04em; padding: 10px 42px 10px 16px; outline: none; transition: border-color 0.2s; }
+    .search-input:focus { border-color: var(--gold); }
+    .search-input::placeholder { color: #666; }
+    .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #666; pointer-events: none; }
+    .search-input { padding-left: 40px; }
+    .search-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #666; cursor: pointer; font-size: 16px; padding: 0; line-height: 1; display: none; }
+    .search-clear.visible { display: block; }
+    .search-clear:hover { color: var(--gold); }
+    .search-results-count { font-size: 11px; color: #777; letter-spacing: 0.08em; white-space: nowrap; }
+
+    /* ── CARD ACTIONS (like/wishlist/share) ── */
+    .card-actions { display: flex; gap: 0; border-top: 1px solid #f0ede8; }
+    .card-action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; background: none; border: none; border-right: 1px solid #f0ede8; color: #aaa; font-size: 10px; letter-spacing: 0.06em; font-family: 'Jost', sans-serif; cursor: pointer; padding: 9px 4px; transition: all 0.18s; }
+    .card-action-btn:last-child { border-right: none; }
+    .card-action-btn:hover { background: var(--gold-pale); color: var(--gold); }
+    .card-action-btn.liked { color: #e74c3c; background: #fff5f5; }
+    .card-action-btn.liked:hover { color: #e74c3c; background: #ffe8e8; }
+    .card-action-btn.wishlisted { color: var(--gold); background: var(--gold-pale); }
+    .card-action-btn svg { width: 13px; height: 13px; fill: currentColor; flex-shrink: 0; }
+
+    /* ── STORES (redesigned as grid cards) ── */
     .stores-section { background: var(--white); padding: 64px 48px; border-top: 1px solid #e8e3dc; }
     .stores-header { text-align: center; max-width: 600px; margin: 0 auto 40px; }
     .stores-eyebrow { font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; }
     .stores-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; letter-spacing: 0.04em; color: var(--black); margin-bottom: 10px; }
     .stores-title em { font-style: italic; color: var(--gold); }
     .stores-sub { font-size: 12.5px; color: var(--mid); line-height: 1.7; }
-    .stores-grid { display: grid; grid-template-columns: 360px 1fr; gap: 28px; max-width: 1300px; margin: 0 auto; }
-    .store-list { display: flex; flex-direction: column; gap: 14px; }
-    .store-item { border: 1px solid #e8e3dc; padding: 18px 20px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-    .store-item:hover { border-color: var(--gold-light); }
-    .store-item.active { border-color: var(--gold); background: var(--gold-pale); }
+    .stores-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; max-width: 1300px; margin: 0 auto 40px; }
+    .store-card { border: 1px solid #e8e3dc; background: var(--white); transition: border-color 0.2s, box-shadow 0.2s; overflow: hidden; }
+    .store-card:hover { border-color: var(--gold-light); box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+    .store-card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--black); }
+    .store-card-name { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); font-weight: 500; }
+    .store-card-header-right { display: flex; align-items: center; gap: 8px; }
+    .store-card-rating-mini { font-size: 11px; color: #aaa; }
+    .store-card-rating-mini strong { color: var(--gold); }
+    .store-card-toggle { background: none; border: 1px solid #3a3a3a; color: #888; padding: 3px 10px; font-size: 10px; letter-spacing: 0.08em; cursor: pointer; font-family: 'Jost', sans-serif; transition: all 0.18s; }
+    .store-card-toggle:hover { border-color: var(--gold); color: var(--gold); }
+    .store-card-body { padding: 16px 18px; }
+    .store-card-body.collapsed { display: none; }
     .store-item-name { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--black); margin-bottom: 8px; font-weight: 500; }
     .store-item-addr { font-size: 12px; color: var(--mid); line-height: 1.6; margin-bottom: 8px; }
     .store-item-meta { font-size: 11px; color: #999; line-height: 1.8; }
+    /* legacy compat */
+    .stores-grid { display: grid; grid-template-columns: 360px 1fr; gap: 28px; max-width: 1300px; margin: 0 auto; }
+    .store-list { display: contents; }
+    .store-item { border: 1px solid #e8e3dc; padding: 18px 20px; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+    .store-item:hover { border-color: var(--gold-light); }
+    .store-item.active { border-color: var(--gold); background: var(--gold-pale); }
 
     /* ── STORE SOCIAL (redesigned) ── */
     .store-social { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
@@ -499,6 +535,16 @@
   <button class="cat-link active" data-cat="all" onclick="return setCategory('all')">Semua Kategori</button>
 </div>
 
+<!-- SEARCH BAR -->
+<div class="search-bar-wrap">
+  <div class="search-input-wrap">
+    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="position:absolute;left:14px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input class="search-input" id="searchInput" type="text" placeholder="Cari produk, brand, kategori..." oninput="handleSearch(this.value)" autocomplete="off" />
+    <button class="search-clear" id="searchClear" onclick="clearSearch()">&#x2715;</button>
+  </div>
+  <span class="search-results-count" id="searchCount"></span>
+</div>
+
 <div class="hero">
   <p class="hero-eyebrow">Koleksi Eksklusif · Edisi Terbatas</p>
   <h1 class="hero-title">Temukan <em>Keindahan</em><br>Fashion Mewah Dunia</h1>
@@ -581,17 +627,18 @@
     </div>
   </div>
 
-  <div class="stores-grid">
-    <div class="store-list" id="storeList"></div>
-    <div>
-      <div class="map-toggle-row">
-        <button class="btn-map-toggle" onclick="toggleMap()" id="mapToggleBtn">
-          <span id="mapToggleIcon">🗺️</span> <span id="mapToggleText">Tampilkan Peta</span>
-        </button>
-      </div>
-      <div class="store-map-wrap map-hidden" id="storeMapWrap">
-        <iframe id="storeMapFrame" src="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Peta Lokasi Cabang HarmoniFashion"></iframe>
-      </div>
+  <!-- Cabang berjejer dalam grid card -->
+  <div class="stores-cards-grid" id="storeList"></div>
+
+  <!-- Peta (di bawah grid) -->
+  <div style="max-width:1300px;margin:0 auto;">
+    <div class="map-toggle-row">
+      <button class="btn-map-toggle" onclick="toggleMap()" id="mapToggleBtn">
+        <span id="mapToggleIcon">🗺️</span> <span id="mapToggleText">Tampilkan Peta</span>
+      </button>
+    </div>
+    <div class="store-map-wrap map-hidden" id="storeMapWrap">
+      <iframe id="storeMapFrame" src="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Peta Lokasi Cabang HarmoniFashion"></iframe>
     </div>
   </div>
 </div>
@@ -701,7 +748,7 @@
    ============================================================ */
 const SUPABASE_URL = 'https://slvcrqtvpokfhkoyqnxt.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsdmNycXR2cG9rZmhrb3lxbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMjE2NDQsImV4cCI6MjA5NzY5NzY0NH0.ZzcTpdhzIkhM6_g4CjNvvcqf5t3YuWFf5feZiMukR3E'
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* ============ TOAST HELPER ============ */
 function showToast(msg, isError = false) {
@@ -1547,6 +1594,11 @@ function applyFilters() {
     if (colors.length && !colors.includes(p.color)) return false;
     if (conds.length  && !conds.includes(p.cond))   return false;
     if (prices.length && !prices.includes(priceBucket(p.price))) return false;
+    // Search filter
+    if (searchQuery) {
+      const hay = (p.name+' '+p.brand+' '+(p.desc||'')+' '+(CATEGORIES.find(c=>c.id===p.cat)||{}).label).toLowerCase();
+      if (!hay.includes(searchQuery)) return false;
+    }
     return true;
   });
   filtered = sortProducts(filtered, sortMode);
@@ -1563,6 +1615,14 @@ function applyFilters() {
   });
   const rc = document.getElementById('resultsCount');
   if (rc) rc.innerHTML='Menampilkan <strong>'+totalShown+'</strong> dari <strong>'+PRODUCTS.length+'</strong> produk';
+  const sc = document.getElementById('searchCount');
+  if (sc) {
+    if (searchQuery) {
+      sc.textContent = totalShown + ' hasil untuk "' + searchQuery + '"';
+    } else {
+      sc.textContent = '';
+    }
+  }
 }
 function sortProducts(list, mode) {
   const arr = list.slice();
@@ -1572,14 +1632,100 @@ function sortProducts(list, mode) {
   else arr.sort((a,b)=>b.id-a.id);
   return arr;
 }
+/* ============================================================
+   WISHLIST / LIKE STATE (localStorage)
+   ============================================================ */
+function getLikes() { try { return JSON.parse(localStorage.getItem('hf_likes')||'{}'); } catch(e){return{};} }
+function getWishlist() { try { return JSON.parse(localStorage.getItem('hf_wishlist')||'{}'); } catch(e){return{};} }
+function saveLikes(d) { localStorage.setItem('hf_likes', JSON.stringify(d)); }
+function saveWishlist(d) { localStorage.setItem('hf_wishlist', JSON.stringify(d)); }
+
+function toggleLike(id, e) {
+  e.stopPropagation();
+  const likes = getLikes();
+  if (likes[id]) { delete likes[id]; } else { likes[id] = true; }
+  saveLikes(likes);
+  // update button UI
+  const btn = document.querySelector('.card-action-btn[data-like="'+id+'"]');
+  if (btn) {
+    btn.classList.toggle('liked', !!likes[id]);
+    btn.querySelector('.action-txt').textContent = likes[id] ? 'Disukai' : 'Suka';
+  }
+}
+
+function toggleWishlist(id, e) {
+  e.stopPropagation();
+  const wl = getWishlist();
+  if (wl[id]) { delete wl[id]; } else { wl[id] = true; }
+  saveWishlist(wl);
+  const btn = document.querySelector('.card-action-btn[data-wish="'+id+'"]');
+  if (btn) {
+    btn.classList.toggle('wishlisted', !!wl[id]);
+    btn.querySelector('.action-txt').textContent = wl[id] ? 'Tersimpan' : 'Wishlist';
+  }
+  const cnt = Object.keys(getWishlist()).length;
+  showToast(wl[id] ? '❤ Ditambahkan ke wishlist!' : 'Dihapus dari wishlist.');
+}
+
+function shareProduct(id, e) {
+  e.stopPropagation();
+  const p = PRODUCTS.find(x=>x.id===id); if(!p) return;
+  const text = 'Cek produk '+p.brand+' — '+p.name+' di HarmoniFashion!
+Harga mulai '+formatRupiah(p.price)+'.';
+  if (navigator.share) {
+    navigator.share({ title: p.name, text: text, url: window.location.href }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text+'
+'+window.location.href).then(()=>{ showToast('Link produk disalin ke clipboard!'); }).catch(()=>{ showToast('Gagal menyalin link.', true); });
+  }
+}
+
 function renderCard(p) {
   const imgUrl='https://images.unsplash.com/photo-'+p.img+'?w=440&q=80';
+  const likes = getLikes(); const wl = getWishlist();
+  const isLiked = !!likes[p.id]; const isWished = !!wl[p.id];
   return `<div class="card" onclick="openModal(${p.id})">
     <div class="card-img-wrap"><img src="${imgUrl}" alt="${p.name}" loading="lazy" />${p.badge?`<span class="card-badge">${p.badge}</span>`:''}</div>
     <div class="card-body"><div class="card-brand">${p.brand}</div><div class="card-name">${p.name}</div><div class="card-desc">${p.desc}</div><div class="card-price">Mulai <strong>${formatRupiah(p.price)}</strong></div></div>
     <a href="#" class="btn-detail" onclick="event.preventDefault();event.stopPropagation();openModal(${p.id})">Lihat Detail</a>
+    <div class="card-actions">
+      <button class="card-action-btn${isLiked?' liked':''}" data-like="${p.id}" onclick="toggleLike(${p.id},event)" title="Suka">
+        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <span class="action-txt">${isLiked?'Disukai':'Suka'}</span>
+      </button>
+      <button class="card-action-btn${isWished?' wishlisted':''}" data-wish="${p.id}" onclick="toggleWishlist(${p.id},event)" title="Simpan ke Wishlist">
+        <svg viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+        <span class="action-txt">${isWished?'Tersimpan':'Wishlist'}</span>
+      </button>
+      <button class="card-action-btn" onclick="shareProduct(${p.id},event)" title="Bagikan">
+        <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+        <span class="action-txt">Bagikan</span>
+      </button>
+    </div>
   </div>`;
 }
+/* ============================================================
+   SEARCH
+   ============================================================ */
+let searchQuery = '';
+
+function handleSearch(val) {
+  searchQuery = val.trim().toLowerCase();
+  const clearBtn = document.getElementById('searchClear');
+  if (clearBtn) clearBtn.classList.toggle('visible', searchQuery.length > 0);
+  applyFilters();
+}
+
+function clearSearch() {
+  searchQuery = '';
+  const inp = document.getElementById('searchInput');
+  if (inp) inp.value = '';
+  const clearBtn = document.getElementById('searchClear');
+  if (clearBtn) clearBtn.classList.remove('visible');
+  document.getElementById('searchCount').textContent = '';
+  applyFilters();
+}
+
 function resetFilters() {
   document.querySelectorAll('.f-brand, .f-color, .f-price, .f-cond').forEach(cb=>cb.checked=false);
   document.getElementById('sortSelect').value='newest';
@@ -1654,42 +1800,59 @@ function socialIcon(type) {
 
 function buildStores() {
   const listEl = document.getElementById('storeList');
-  if (!STORES.length) { listEl.innerHTML='<p style="color:#999;font-size:13px;">Belum ada cabang. Tambahkan di Admin Panel.</p>'; return; }
-  listEl.innerHTML = STORES.map((s,i) => `
-    <div class="store-item${i===0?' active':''}" data-store="${s.id}" onclick="selectStore('${s.id}')">
-      <div class="store-item-name">${s.name}</div>
-      <div class="store-item-addr"><strong>Alamat:</strong> ${s.address}</div>
-      <div class="store-item-meta">📞 ${s.phone}<br>⏰ ${s.hours}</div>
-      <div class="store-social">
-        <a class="store-social-btn ssb-ig" href="${s.social.ig}" onclick="event.stopPropagation()" target="_blank" rel="noopener">${socialIcon('ig')} Instagram</a>
-        <a class="store-social-btn ssb-fb" href="${s.social.fb}" onclick="event.stopPropagation()" target="_blank" rel="noopener">${socialIcon('fb')} Facebook</a>
-        <a class="store-social-btn ssb-wa" href="${s.social.wa}" onclick="event.stopPropagation()" target="_blank" rel="noopener">${socialIcon('wa')} WhatsApp</a>
-        <a class="store-social-btn ssb-tt" href="${s.social.tt}" onclick="event.stopPropagation()" target="_blank" rel="noopener">${socialIcon('tt')} TikTok</a>
-      </div>
-      <div class="store-rating-wrap">
-        <div class="store-rating-label">★ Beri Rating Cabang Ini</div>
-        <div class="store-stars" id="stars-${s.id}">
-          ${[1,2,3,4,5].map(n=>`<button class="star-btn" onclick="rateStore('${s.id}',${n});event.stopPropagation()" onmouseover="hoverStars('${s.id}',${n})" onmouseout="resetStarHover('${s.id}')">★</button>`).join('')}
+  if (!STORES.length) { listEl.innerHTML='<p style="color:#999;font-size:13px;grid-column:1/-1;">Belum ada cabang. Tambahkan di Admin Panel.</p>'; return; }
+  listEl.innerHTML = STORES.map((s,i) => {
+    const r = storeRatings[s.id]||{total:0,count:0};
+    const avg = r.count ? (r.total/r.count).toFixed(1) : null;
+    return `<div class="store-card" id="sc-${s.id}">
+      <div class="store-card-header">
+        <div class="store-card-name">${s.name}</div>
+        <div class="store-card-header-right">
+          ${avg ? `<span class="store-card-rating-mini">★ <strong>${avg}</strong>/5</span>` : ''}
+          <button class="store-card-toggle" onclick="toggleStoreCard('${s.id}')" id="toggle-${s.id}">Sembunyikan ▲</button>
         </div>
-        <div class="store-rating-summary" id="rating-summary-${s.id}">Belum ada rating</div>
       </div>
-      <div class="comment-form-wrap" onclick="event.stopPropagation()">
-        <div class="comment-form-label">💬 Tinggalkan Komentar &amp; Foto Bukti</div>
-        <input class="comment-name-input" id="cname-${s.id}" type="text" placeholder="Nama Anda (opsional)" maxlength="60" />
-        <textarea class="comment-textarea" id="ctext-${s.id}" placeholder="Ceritakan pengalaman belanja Anda di cabang ini..." maxlength="500"></textarea>
-        <div class="photo-upload-row">
-          <button class="photo-upload-btn" onclick="triggerPhotoUpload('${s.id}')">📷 Upload Foto Bukti</button>
-          <span style="font-size:10px;color:#bbb;letter-spacing:0.05em;">Maks. 4 foto (jpg/png)</span>
+      <div class="store-card-body" id="scb-${s.id}">
+        <div class="store-item-addr" style="margin-top:4px;"><strong>Alamat:</strong> ${s.address}</div>
+        <div class="store-item-meta">📞 ${s.phone}&nbsp;&nbsp;⏰ ${s.hours}</div>
+        <div class="store-social" style="margin-top:12px;">
+          <a class="store-social-btn ssb-ig" href="${s.social.ig}" target="_blank" rel="noopener">${socialIcon('ig')} Instagram</a>
+          <a class="store-social-btn ssb-fb" href="${s.social.fb}" target="_blank" rel="noopener">${socialIcon('fb')} Facebook</a>
+          <a class="store-social-btn ssb-wa" href="${s.social.wa}" target="_blank" rel="noopener">${socialIcon('wa')} WhatsApp</a>
+          <a class="store-social-btn ssb-tt" href="${s.social.tt}" target="_blank" rel="noopener">${socialIcon('tt')} TikTok</a>
         </div>
-        <input class="photo-upload-input" type="file" id="photo-input-${s.id}" accept="image/jpeg,image/png,image/webp" multiple onchange="handlePhotoUpload(event,'${s.id}')" />
-        <div class="photo-preview-list" id="photo-preview-${s.id}"></div>
-        <button class="btn-submit-comment" onclick="submitComment('${s.id}')">Kirim Komentar</button>
+        <div class="store-rating-wrap">
+          <div class="store-rating-label">★ Beri Rating Cabang Ini</div>
+          <div class="store-stars" id="stars-${s.id}">
+            ${[1,2,3,4,5].map(n=>`<button class="star-btn" onclick="rateStore('${s.id}',${n})" onmouseover="hoverStars('${s.id}',${n})" onmouseout="resetStarHover('${s.id}')">★</button>`).join('')}
+          </div>
+          <div class="store-rating-summary" id="rating-summary-${s.id}">Belum ada rating</div>
+        </div>
+        <div class="comment-form-wrap">
+          <div class="comment-form-label">💬 Tinggalkan Komentar &amp; Foto Bukti</div>
+          <input class="comment-name-input" id="cname-${s.id}" type="text" placeholder="Nama Anda (opsional)" maxlength="60" />
+          <textarea class="comment-textarea" id="ctext-${s.id}" placeholder="Ceritakan pengalaman belanja Anda di cabang ini..." maxlength="500"></textarea>
+          <div class="photo-upload-row">
+            <button class="photo-upload-btn" onclick="triggerPhotoUpload('${s.id}')">📷 Upload Foto Bukti</button>
+            <span style="font-size:10px;color:#bbb;letter-spacing:0.05em;">Maks. 4 foto (jpg/png)</span>
+          </div>
+          <input class="photo-upload-input" type="file" id="photo-input-${s.id}" accept="image/jpeg,image/png,image/webp" multiple onchange="handlePhotoUpload(event,'${s.id}')" />
+          <div class="photo-preview-list" id="photo-preview-${s.id}"></div>
+          <button class="btn-submit-comment" onclick="submitComment('${s.id}')">Kirim Komentar</button>
+        </div>
+        <div class="comment-list" id="comment-list-${s.id}"><div class="no-comments">Belum ada komentar. Jadilah yang pertama!</div></div>
       </div>
-      <div class="comment-list" id="comment-list-${s.id}"><div class="no-comments">Belum ada komentar. Jadilah yang pertama!</div></div>
-    </div>`).join('');
-  // Render stars & comments for all stores
+    </div>`;
+  }).join('');
   STORES.forEach(s => { renderStars(s.id); updateRatingSummary(s.id); renderComments(s.id); });
-  if (STORES.length) selectStore(STORES[0].id);
+}
+
+function toggleStoreCard(id) {
+  const body = document.getElementById('scb-'+id);
+  const btn  = document.getElementById('toggle-'+id);
+  if (!body || !btn) return;
+  const isHidden = body.classList.toggle('collapsed');
+  btn.textContent = isHidden ? 'Tampilkan ▼' : 'Sembunyikan ▲';
 }
 
 function selectStore(id) {
