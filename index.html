@@ -1573,7 +1573,7 @@ function sortProducts(list, mode) {
   return arr;
 }
 function renderCard(p) {
-  const imgUrl='https://images.unsplash.com/photo-'+p.img+'?w=440&q=80';
+  const imgUrl = p.image_url || 'https://via.placeholder.com/400x500?text=No+Image';
   return `<div class="card" onclick="openModal(${p.id})">
     <div class="card-img-wrap"><img src="${imgUrl}" alt="${p.name}" loading="lazy" />${p.badge?`<span class="card-badge">${p.badge}</span>`:''}</div>
     <div class="card-body"><div class="card-brand">${p.brand}</div><div class="card-name">${p.name}</div><div class="card-desc">${p.desc}</div><div class="card-price">Mulai <strong>${formatRupiah(p.price)}</strong></div></div>
