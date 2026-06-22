@@ -900,44 +900,32 @@ let wishlistIds=new Set();
 let searchQuery='';
 
 const CS_WHATSAPP='6281234567890';
-async function adminLogin(){
+const { data: profile } =
+await supabase
+.from('admin_profiles')
+.select('*')
+.eq('id', data.user.id)
+.single();
 
- const email =
- document.getElementById('adminEmail').value;
-
- const password =
- document.getElementById('adminPassword').value;
-
- const { data, error } =
- await supabase.auth.signInWithPassword({
-   email,
-   password
- });
-
- if(error){
-   alert(error.message);
+if(!profile){
+   alert('Bukan admin');
    return;
- }
-
- const { data: profile } =
- await supabase
- .from('admin_profiles')
- .select('*')
- .eq('id', data.user.id)
- .single();
-
- if(!profile){
-    alert('Bukan admin');
-    return;
- }
-
- localStorage.setItem(
-   'adminLoggedIn',
-   'true'
- );
-
- location.reload();
 }
+
+currentUser = {
+   id: data.user.id,
+   email: data.user.email,
+   name: profile.full_name,
+   role: 'admin'
+};
+
+saveSession(currentUser);
+
+closeAuthModal();
+
+renderNavAuthArea();
+console.log(currentUser);
+enterAdminPanel();
 
 
 async function checkAdmin(){
@@ -967,8 +955,38 @@ async function logoutAdmin(){
    'adminLoggedIn'
  );
 
- location.reload();
+ 
 }
+
+async function restoreAdminSession(){
+
+  const { data } =
+  await supabase.auth.getUser();
+
+  if(!data.user) return;
+
+  const { data: profile } =
+  await supabase
+  .from('admin_profiles')
+  .select('*')
+  .eq('id', data.user.id)
+  .single();
+
+  if(!profile) return;
+
+  currentUser = {
+    id: data.user.id,
+    email: data.user.email,
+    name: profile.full_name,
+    role: 'admin'
+  };
+
+  renderNavAuthArea();
+
+  enterAdminPanel();
+}
+
+await restoreAdminSession();
 
 /* ============ COLOR MAPS ============ */
 const COLOR_LABELS={black:'Hitam',white:'Putih',brown:'Cokelat / Tan',beige:'Nude / Beige',red:'Merah',navy:'Navy',gold:'Emas / Gold',silver:'Silver'};
