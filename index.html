@@ -147,6 +147,8 @@
     /* ── LAYOUT ── */
     .layout { display: flex; max-width: 1400px; margin: 0 auto; }
 
+    
+
     /* ── SIDEBAR ── */
     .sidebar { width: var(--sidebar-width); flex-shrink: 0; background: var(--white); border-right: 1px solid #e8e3dc; padding: 32px 24px; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; scrollbar-width: thin; }
     .sidebar-section { margin-bottom: 28px; }
@@ -254,14 +256,19 @@
     .store-map-thumb iframe { width: 100%; height: 160px; border: 0; display: block; pointer-events: none; border: 1px solid #e8e3dc; }
     .store-map-open-btn { display: block; text-align: center; background: #f5f3ef; border: 1px solid #e0dbd4; color: var(--mid); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 7px; cursor: pointer; font-family: 'Jost', sans-serif; transition: all 0.2s; margin-top: 6px; }
     .store-map-open-btn:hover { background: var(--gold-pale); border-color: var(--gold); color: var(--black); }
+    .store-map-hide-btn{
+  border:none;
+  background:none;
+  color:var(--gold);
+  cursor:pointer;
+  font-size:11px;
+  letter-spacing:.08em;
+}
 
-    /* Right panel map (full) */
-    .btn-map-toggle { background: var(--black); color: var(--gold); border: none; padding: 9px 20px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; cursor: pointer; font-family: 'Jost', sans-serif; transition: background 0.2s; display: flex; align-items: center; gap: 7px; }
-    .btn-map-toggle:hover { background: var(--charcoal); }
-    .map-hidden { display: none; }
-    .store-map-wrap { border: 1px solid #e8e3dc; background: var(--light-gray); }
-    .store-map-wrap iframe { width: 100%; height: 100%; min-height: 420px; border: 0; display: block; }
-    .map-toggle-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.store-map-content.hidden{
+  display:none;
+}
+
 
     /* ── COMMENT FORM ── */
     .comment-form-wrap { margin-top: 14px; padding-top: 14px; border-top: 1px dashed #e0dbd4; }
@@ -924,6 +931,23 @@ function getImgUrl(imgVal, w=440) {
   return imgVal;
 }
 
+
+function toggleReviewMap(storeId,event){
+  event.stopPropagation();
+
+  const content =
+    document.getElementById('map-content-'+storeId);
+
+  const btn = event.target;
+
+  content.classList.toggle('hidden');
+
+  btn.textContent =
+    content.classList.contains('hidden')
+      ? 'Tampilkan'
+      : 'Sembunyikan';
+}
+
 /* ============================================================
    SUPABASE: LOAD ALL DATA
    ============================================================ */
@@ -1505,13 +1529,41 @@ function buildStores(){
           <div class="store-rating-summary" id="rating-summary-${s.id}">Belum ada rating</div>
         </div>
         <!-- MAP SEBELUM REVIEW FORM -->
-        <div class="store-map-area" onclick="event.stopPropagation()">
-          <div class="store-map-area-label">📍 Lokasi Cabang</div>
-          <div class="store-map-thumb">
-            <iframe src="https://www.google.com/maps?q=${encodeURIComponent(s.query||s.address||s.name)}&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Peta ${escHtml(s.name)}"></iframe>
-          </div>
-          <a class="store-map-open-btn" href="https://maps.google.com/?q=${encodeURIComponent(s.query||s.address||s.name)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🗺️ Buka di Google Maps</a>
-        </div>
+       <div class="store-map-area" onclick="event.stopPropagation()">
+
+  <div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  ">
+    <div class="store-map-area-label">📍 Lokasi Cabang</div>
+
+    <button
+      class="store-map-hide-btn"
+      onclick="toggleReviewMap('${s.id}',event)">
+      Sembunyikan
+    </button>
+  </div>
+
+  <div class="store-map-content" id="map-content-${s.id}">
+    <div class="store-map-thumb">
+      <iframe
+        src="https://www.google.com/maps?q=${encodeURIComponent(s.query||s.address||s.name)}&output=embed"
+        loading="lazy">
+      </iframe>
+    </div>
+
+    <a
+      class="store-map-open-btn"
+      href="https://maps.google.com/?q=${encodeURIComponent(s.query||s.address||s.name)}"
+      target="_blank"
+      rel="noopener">
+      🗺️ Buka di Google Maps
+    </a>
+  </div>
+
+</div>
         <!-- REVIEW FORM SETELAH PETA -->
         <div class="comment-form-wrap" onclick="event.stopPropagation()">
           <div class="comment-form-label">💬 Tinggalkan Komentar &amp; Foto Bukti</div>
@@ -1607,16 +1659,6 @@ function updateOverallRating(){
   const avg=totalScore/totalVotes;scoreEl.textContent=avg.toFixed(1);
   let sh='';for(let i=1;i<=5;i++){if(avg>=i)sh+='<span class="overall-star">★</span>';else if(avg>=i-0.5)sh+='<span class="overall-star half">★</span>';else sh+='<span class="overall-star empty">☆</span>';}
   starsEl.innerHTML=sh;metaEl.textContent=`dari ${totalVotes} ulasan · ${rated.length} cabang dinilai`;
-}
-
-/* ============================================================
-   MAP TOGGLE (right panel)
-   ============================================================ */
-function toggleMap(){
-  mapVisible=!mapVisible;
-  const wrap=document.getElementById('storeMapWrap'),icon=document.getElementById('mapToggleIcon'),text=document.getElementById('mapToggleText');
-  if(mapVisible){wrap.classList.remove('map-hidden');icon.textContent='✕';text.textContent='Sembunyikan Peta';const s=STORES.find(x=>x.id===activeStoreId);if(s)document.getElementById('storeMapFrame').src='https://www.google.com/maps?q='+encodeURIComponent(s.query||s.address||s.name)+'&output=embed';}
-  else{wrap.classList.add('map-hidden');icon.textContent='🗺️';text.textContent='Tampilkan Peta';document.getElementById('storeMapFrame').src='';}
 }
 
 /* ============================================================
