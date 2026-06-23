@@ -877,8 +877,8 @@
 /* ============================================================
    HARMONIFASHION - SUPABASE INTEGRATION (v2 - Full Features)
    ============================================================ */
-const SUPABASE_URL = 'https://slvcrqtvpokfhkoyqnxt.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsdmNycXR2cG9rZmhrb3lxbnh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxMjE2NDQsImV4cCI6MjA5NzY5NzY0NH0.ZzcTpdhzIkhM6_g4CjNvvcqf5t3YuWFf5feZiMukR3E';
+const SUPABASE_URL = 'https://yqedyhpcecpizpokkbbg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxZWR5aHBjZWNwaXpwb2trYmJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxOTk5MDUsImV4cCI6MjA5Nzc3NTkwNX0.Fli8HlORJKUxGjcdMiprwHUue5dtXgNdVIpdrVsrLkY'
 const SUPABASE_STORAGE_BUCKET = 'product-images';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -900,7 +900,7 @@ let wishlistIds=new Set();
 let searchQuery='';
 
 const CS_WHATSAPP='6281234567890';
-const ADMIN_ACCOUNTS=[{username:'admin',password:'admin123',name:'Administrator'}];
+// Admin auth sekarang menggunakan Supabase Auth — tidak ada hardcoded credentials
 
 /* ============ COLOR MAPS ============ */
 const COLOR_LABELS={black:'Hitam',white:'Putih',brown:'Cokelat / Tan',beige:'Nude / Beige',red:'Merah',navy:'Navy',gold:'Emas / Gold',silver:'Silver'};
@@ -1186,41 +1186,87 @@ async function submitComment(storeId) {
 }
 
 /* ============================================================
-   AUTH
+   AUTH — Supabase Auth (Admin) + customer_users (Customer)
    ============================================================ */
 async function handleLogin(e) {
   e.preventDefault();
-  const username=document.getElementById('authUsername').value.trim();
-  const password=document.getElementById('authPassword').value;
-  if(!username||!password){showAuthError('Username dan kata sandi wajib diisi.');return false;}
-  if(authMode==='admin'){
-    const admin=ADMIN_ACCOUNTS.find(a=>a.username.toLowerCase()===username.toLowerCase()&&a.password===password);
-    if(!admin){showAuthError('Username atau kata sandi Admin salah.');return false;}
-    currentUser={username:admin.username,name:admin.name,role:'admin'};
-    saveSession(currentUser); closeAuthModal(); renderNavAuthArea(); enterAdminPanel(); return false;
+  const input = document.getElementById('authUsername').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if (!input || !password) { showAuthError('Email/Username dan kata sandi wajib diisi.'); return false; }
+
+  const btn = document.getElementById('authSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Memproses...';
+
+  if (authMode === 'admin') {
+    // ── Admin: gunakan Supabase Auth ─────────────────────────
+    // Input bisa berupa email atau username — coba cek tabel admin_users dulu
+    let emailToUse = input;
+    if (!input.includes('@')) {
+      // Cari email berdasarkan username di tabel admin_users
+      const { data: adminRow } = await sb.from('admin_users').select('email').eq('username', input.toLowerCase()).single();
+      if (!adminRow) { showAuthError('Username Admin tidak ditemukan.'); btn.disabled=false; btn.textContent='Masuk sebagai Admin'; return false; }
+      emailToUse = adminRow.email;
+    }
+    const { data, error } = await sb.auth.signInWithPassword({ email: emailToUse, password });
+    if (error) { showAuthError('Email/password Admin salah: ' + error.message); btn.disabled=false; btn.textContent='Masuk sebagai Admin'; return false; }
+    // Verifikasi user ini memang terdaftar sebagai admin
+    const { data: adminCheck } = await sb.from('admin_users').select('username,display_name').eq('email', emailToUse).single();
+    if (!adminCheck) {
+      await sb.auth.signOut();
+      showAuthError('Akun ini tidak memiliki hak akses Admin.');
+      btn.disabled=false; btn.textContent='Masuk sebagai Admin'; return false;
+    }
+    currentUser = { email: emailToUse, username: adminCheck.username, name: adminCheck.display_name || adminCheck.username, role: 'admin' };
+    closeAuthModal(); renderNavAuthArea(); enterAdminPanel();
+    btn.disabled=false; btn.textContent='Masuk sebagai Admin'; return false;
   }
-  const {data:existing,error:fetchErr}=await sb.from('customer_users').select('*').eq('username',username.toLowerCase()).single();
-  if(fetchErr&&fetchErr.code!=='PGRST116'){showAuthError('Terjadi kesalahan. Coba lagi.');return false;}
-  if(existing){
-    if(existing.password_hash!==simpleHash(password)){showAuthError('Kata sandi salah. Silakan coba lagi.');return false;}
-    currentUser={username:existing.username,name:existing.display_name||existing.username,role:'customer'};
+
+  // ── Customer: tetap gunakan customer_users table ──────────
+  const username = input.toLowerCase();
+  const { data: existing, error: fetchErr } = await sb.from('customer_users').select('*').eq('username', username).single();
+  if (fetchErr && fetchErr.code !== 'PGRST116') { showAuthError('Terjadi kesalahan. Coba lagi.'); btn.disabled=false; btn.textContent='Masuk sebagai Customer'; return false; }
+  if (existing) {
+    if (existing.password_hash !== simpleHash(password)) { showAuthError('Kata sandi salah. Silakan coba lagi.'); btn.disabled=false; btn.textContent='Masuk sebagai Customer'; return false; }
+    currentUser = { username: existing.username, name: existing.display_name || existing.username, role: 'customer' };
   } else {
-    const {data:newUser,error:insertErr}=await sb.from('customer_users').insert({username:username.toLowerCase(),password_hash:simpleHash(password),display_name:username}).select().single();
-    if(insertErr){showAuthError('Gagal mendaftar. Coba lagi.');return false;}
-    currentUser={username:newUser.username,name:newUser.display_name,role:'customer'};
+    const { data: newUser, error: insertErr } = await sb.from('customer_users').insert({ username, password_hash: simpleHash(password), display_name: input }).select().single();
+    if (insertErr) { showAuthError('Gagal mendaftar. Coba lagi.'); btn.disabled=false; btn.textContent='Masuk sebagai Customer'; return false; }
+    currentUser = { username: newUser.username, name: newUser.display_name, role: 'customer' };
     showToast('Akun baru berhasil dibuat! Selamat datang.');
   }
-  saveSession(currentUser); closeAuthModal(); renderNavAuthArea(); return false;
+  // Simpan customer session di localStorage (tidak butuh Supabase Auth)
+  localStorage.setItem('hf_customer_session', JSON.stringify(currentUser));
+  closeAuthModal(); renderNavAuthArea();
+  btn.disabled=false; btn.textContent='Masuk sebagai Customer'; return false;
 }
+
 function simpleHash(str){let h=0;for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h=((h<<5)-h)+c;h|=0;}return'hf_'+Math.abs(h).toString(36);}
 
 /* ============================================================
-   SESSION
+   SESSION — restore saat halaman dibuka
    ============================================================ */
-const LS_KEY='hf_session';
-function loadSession(){try{return JSON.parse(localStorage.getItem(LS_KEY))||null;}catch(e){return null;}}
-function saveSession(s){if(s)localStorage.setItem(LS_KEY,JSON.stringify(s));else localStorage.removeItem(LS_KEY);}
-function restoreSession(){const s=loadSession();if(!s){renderNavAuthArea();return;}currentUser=s;renderNavAuthArea();if(currentUser.role==='admin')enterAdminPanel();}
+async function restoreSession() {
+  // 1. Cek apakah ada Supabase Auth session (Admin)
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    // Verifikasi sebagai admin
+    const { data: adminCheck } = await sb.from('admin_users').select('username,display_name').eq('email', session.user.email).single();
+    if (adminCheck) {
+      currentUser = { email: session.user.email, username: adminCheck.username, name: adminCheck.display_name || adminCheck.username, role: 'admin' };
+      renderNavAuthArea(); enterAdminPanel(); return;
+    }
+    // Bukan admin, logout dari supabase auth
+    await sb.auth.signOut();
+  }
+
+  // 2. Cek customer session di localStorage
+  try {
+    const saved = localStorage.getItem('hf_customer_session');
+    if (saved) { currentUser = JSON.parse(saved); renderNavAuthArea(); return; }
+  } catch(e) {}
+
+  renderNavAuthArea();
+}
 
 /* ============================================================
    AUTH UI
@@ -1233,11 +1279,17 @@ function switchAuthTab(mode){
   document.getElementById('tabAdmin').classList.toggle('active',mode==='admin');
   document.getElementById('authError').classList.remove('show');
   const sb2=document.getElementById('authSubmitBtn'),hint=document.getElementById('authHint'),ul=document.getElementById('authUserLabel');
-  if(mode==='admin'){sb2.textContent='Masuk sebagai Admin';ul.textContent='Username Admin';hint.innerHTML='Akses ini khusus untuk pengelola toko HarmoniFashion.';}
+  if(mode==='admin'){sb2.textContent='Masuk sebagai Admin';ul.textContent='Email atau Username Admin';hint.innerHTML='Login menggunakan email/username Supabase Admin Anda. Akses khusus pengelola toko.';}
   else{sb2.textContent='Masuk sebagai Customer';ul.textContent='Username / Email';hint.innerHTML='Belum punya akun? <strong>Daftar otomatis</strong> saat login pertama kali sebagai Customer.';}
 }
 function showAuthError(msg){const el=document.getElementById('authError');el.textContent=msg;el.classList.add('show');}
-function handleLogout(){currentUser=null;saveSession(null);exitAdminPanel();renderNavAuthArea();}
+async function handleLogout(){
+  if(currentUser && currentUser.role==='admin'){
+    await sb.auth.signOut();
+  }
+  localStorage.removeItem('hf_customer_session');
+  currentUser=null; exitAdminPanel(); renderNavAuthArea();
+}
 function renderNavAuthArea(){
   const area=document.getElementById('navAuthArea');
   if(!currentUser){area.innerHTML='<a href="#" class="btn-login" onclick="return openAuthModal()">Login</a>';return;}
