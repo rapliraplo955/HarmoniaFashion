@@ -732,13 +732,8 @@
     </div>
   </div>
 
-  <div class="stores-grid">
+  <div class="stores-grid" style="grid-template-columns:1fr;">
     <div class="store-list" id="storeList"></div>
-    <div>
-      <div class="store-map-wrap map-hidden" id="storeMapWrap">
-        <iframe id="storeMapFrame" src="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Peta Lokasi Cabang HarmoniFashion"></iframe>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -892,7 +887,7 @@ function showToast(msg, isError=false) {
 }
 
 /* ============ GLOBAL STATE ============ */
-let CATEGORIES=[], PRODUCTS=[], STORES=[];
+let CATEGORIES=[], PRODUCTS=[], STORES=[], currentWishlist = [];
 let storeRatings={}, storeComments={}, pendingPhotos={};
 let currentUser=null, authMode='customer', adminCurrentPage='dashboard';
 let adminEditState={type:null,id:null};
@@ -927,21 +922,7 @@ function getImgUrl(imgVal, w=440) {
 }
 
 
-function toggleReviewMap(storeId,event){
-  event.stopPropagation();
 
-  const content =
-    document.getElementById('map-content-'+storeId);
-
-  const btn = event.target;
-
-  content.classList.toggle('hidden');
-
-  btn.textContent =
-    content.classList.contains('hidden')
-      ? 'Tampilkan'
-      : 'Sembunyikan';
-}
 
 /* ============================================================
    SUPABASE: LOAD ALL DATA
@@ -951,7 +932,7 @@ async function loadAllData() {
   try {
     await Promise.all([loadCategories(), loadProducts(), loadStores()]);
     buildCategoryNav(); buildSections(); buildBrandFilter(); buildColorFilter(); buildStores();
-    applyFilters(); updateOverallRating(); restoreSession();
+    applyFilters(); updateOverallRating(); restoreSession(); loadLocalWishlist();
   } catch(err) {
     console.error('Load error:', err);
     showToast('Gagal memuat data. Periksa koneksi Supabase.', true);
@@ -1071,104 +1052,62 @@ function closeSearchAndOpen(productId) {
 }
 
 /* ============================================================
-   WISHLIST — Supabase-backed, wajib login customer
+   WISHLIST
    ============================================================ */
-
-// Muat wishlist dari Supabase setelah login customer
-async function loadWishlist() {
-  wishlistIds = new Set();
-  if (!currentUser || currentUser.role !== 'customer') {
-    updateWishlistBadge();
+const WISHLIST_KEY='hf_wishlist';
+function loadLocalWishlist() {
+  try { const s=localStorage.getItem(WISHLIST_KEY); wishlistIds=new Set(s?JSON.parse(s):[]); } catch(e){wishlistIds=new Set();}
+  updateWishlistBadge();
+}
+function saveLocalWishlist() { localStorage.setItem(WISHLIST_KEY,JSON.stringify([...wishlistIds])); }
+function toggleWishlist(productId, e) {
+  if(e){e.preventDefault();e.stopPropagation();}
+  // Wajib login sebagai customer untuk menggunakan wishlist
+  if(!currentUser || currentUser.role !== 'customer') {
+    showToast('Silakan login sebagai Customer untuk menggunakan Wishlist.');
+    setTimeout(()=>openAuthModal(), 500);
     return;
   }
-  const { data, error } = await sb
-    .from('wishlists')
-    .select('product_id')
-    .eq('username', currentUser.username);
-  if (error) { console.error('Error loading wishlist:', error); return; }
-  wishlistIds = new Set((data || []).map(w => w.product_id));
-  updateWishlistBadge();
-  applyFilters(); // refresh semua tombol wishlist di kartu
-}
-
-// Kosongkan wishlist lokal saat logout
-function clearWishlistLocal() {
-  wishlistIds = new Set();
-  updateWishlistBadge();
-  applyFilters();
-}
-
-async function toggleWishlist(productId, e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
-  if (!currentUser || currentUser.role !== 'customer') {
-    showToast('Silakan login terlebih dahulu untuk menggunakan wishlist.');
-    openAuthModal();
-    return;
-  }
-  if (wishlistIds.has(productId)) {
-    // Hapus dari Supabase
-    const { error } = await sb
-      .from('wishlists')
-      .delete()
-      .eq('username', currentUser.username)
-      .eq('product_id', productId);
-    if (error) { showToast('Gagal menghapus dari wishlist.', true); return; }
+  if(wishlistIds.has(productId)) {
     wishlistIds.delete(productId);
     showToast('Dihapus dari wishlist.');
   } else {
-    // Tambah ke Supabase
-    const { error } = await sb
-      .from('wishlists')
-      .insert({ username: currentUser.username, product_id: productId });
-    if (error) { showToast('Gagal menambahkan ke wishlist.', true); return; }
     wishlistIds.add(productId);
     showToast('Ditambahkan ke wishlist! ♥');
   }
-  updateWishlistBadge();
-  refreshWishlistButtons(productId);
+  saveLocalWishlist(); updateWishlistBadge(); refreshWishlistButtons(productId);
 }
-
 function updateWishlistBadge() {
-  const n = wishlistIds.size;
-  document.getElementById('wishlistCount').textContent = n;
-  const badge = document.getElementById('wishlistBadge');
-  badge.textContent = n; badge.classList.toggle('show', n > 0);
+  const n=wishlistIds.size;
+  document.getElementById('wishlistCount').textContent=n;
+  const badge=document.getElementById('wishlistBadge');
+  badge.textContent=n; badge.classList.toggle('show',n>0);
 }
-
 function refreshWishlistButtons(productId) {
-  document.querySelectorAll('[data-wishlist-id="'+productId+'"]').forEach(btn => {
-    btn.classList.toggle('wishlisted', wishlistIds.has(productId));
-    btn.textContent = wishlistIds.has(productId) ? '♥' : '♡';
+  document.querySelectorAll('[data-wishlist-id="'+productId+'"]').forEach(btn=>{
+    btn.classList.toggle('wishlisted',wishlistIds.has(productId));
+    btn.textContent=wishlistIds.has(productId)?'♥':'♡';
   });
-  // Update tombol wishlist di modal jika sedang terbuka
-  const mw = document.getElementById('modalWishlistBtn');
-  if (mw && parseInt(mw.dataset.id) === productId) {
-    mw.classList.toggle('wishlisted', wishlistIds.has(productId));
-    mw.textContent = wishlistIds.has(productId) ? '♥' : '♡';
+  // Update modal button if open
+  const mw=document.getElementById('modalWishlistBtn');
+  if(mw&&parseInt(mw.dataset.id)===productId){
+    mw.classList.toggle('wishlisted',wishlistIds.has(productId));
+    mw.textContent=wishlistIds.has(productId)?'♥':'♡';
   }
 }
-
 function openWishlistPanel() {
-  const items = document.getElementById('wishlistItems');
-
-  // Belum login
-  if (!currentUser || currentUser.role !== 'customer') {
-    items.innerHTML = `
-      <div class="wishlist-empty">
-        ♡<br><br>
-        Anda harus <strong>login sebagai Customer</strong> untuk melihat dan menggunakan wishlist.<br><br>
-        <button class="btn-primary" onclick="closeWishlistPanel();openAuthModal()">Login Sekarang</button>
-      </div>`;
-    document.getElementById('wishlistOverlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
+  // Wajib login sebagai customer untuk membuka wishlist
+  if(!currentUser || currentUser.role !== 'customer') {
+    showToast('Silakan login sebagai Customer untuk menggunakan Wishlist.');
+    setTimeout(()=>openAuthModal(), 500);
     return;
   }
-
-  const wProducts = [...wishlistIds].map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
-  if (!wProducts.length) {
-    items.innerHTML = '<div class="wishlist-empty">♡<br><br>Belum ada produk di wishlist Anda.<br>Klik ♡ pada produk untuk menyimpannya.</div>';
+  const items=document.getElementById('wishlistItems');
+  const wProducts=[...wishlistIds].map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+  if(!wProducts.length) {
+    items.innerHTML='<div class="wishlist-empty">♡<br><br>Belum ada produk di wishlist Anda.<br>Klik ♡ pada produk untuk menyimpannya.</div>';
   } else {
-    items.innerHTML = wProducts.map(p => `
+    items.innerHTML=wProducts.map(p=>`
       <div class="wishlist-item" id="wi-${p.id}">
         <img class="wishlist-item-img" src="${getImgUrl(p.img1||p.img,120)}" alt="${escHtml(p.name)}" />
         <div class="wishlist-item-info">
@@ -1184,25 +1123,16 @@ function openWishlistPanel() {
       </div>`).join('');
   }
   document.getElementById('wishlistOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow='hidden';
 }
-
-async function removeFromWishlistPanel(id) {
-  if (!currentUser || currentUser.role !== 'customer') return;
-  const { error } = await sb
-    .from('wishlists')
-    .delete()
-    .eq('username', currentUser.username)
-    .eq('product_id', id);
-  if (error) { showToast('Gagal menghapus.', true); return; }
+function removeFromWishlistPanel(id) {
   wishlistIds.delete(id);
-  updateWishlistBadge();
+  saveLocalWishlist(); updateWishlistBadge();
   document.getElementById('wi-'+id)?.remove();
-  const items = document.getElementById('wishlistItems');
-  if (!items.querySelector('.wishlist-item')) items.innerHTML = '<div class="wishlist-empty">♡<br><br>Wishlist kosong.</div>';
+  const items=document.getElementById('wishlistItems');
+  if(!items.querySelector('.wishlist-item')) items.innerHTML='<div class="wishlist-empty">♡<br><br>Wishlist kosong.</div>';
   refreshWishlistButtons(id);
 }
-
 function closeWishlistPanel() { document.getElementById('wishlistOverlay').classList.remove('open'); document.body.style.overflow=''; }
 
 /* ============================================================
@@ -1321,7 +1251,6 @@ async function handleLogin(e) {
   // Simpan customer session di localStorage (tidak butuh Supabase Auth)
   localStorage.setItem('hf_customer_session', JSON.stringify(currentUser));
   closeAuthModal(); renderNavAuthArea();
-  await loadWishlist(); // muat wishlist dari Supabase setelah login
   btn.disabled=false; btn.textContent='Masuk sebagai Customer'; return false;
 }
 
@@ -1347,12 +1276,7 @@ async function restoreSession() {
   // 2. Cek customer session di localStorage
   try {
     const saved = localStorage.getItem('hf_customer_session');
-    if (saved) {
-      currentUser = JSON.parse(saved);
-      renderNavAuthArea();
-      await loadWishlist(); // pulihkan wishlist dari Supabase
-      return;
-    }
+    if (saved) { currentUser = JSON.parse(saved); renderNavAuthArea(); return; }
   } catch(e) {}
 
   renderNavAuthArea();
@@ -1378,9 +1302,7 @@ async function handleLogout(){
     await sb.auth.signOut();
   }
   localStorage.removeItem('hf_customer_session');
-  currentUser=null;
-  clearWishlistLocal(); // kosongkan wishlist saat logout
-  exitAdminPanel(); renderNavAuthArea();
+  currentUser=null; exitAdminPanel(); renderNavAuthArea();
 }
 function renderNavAuthArea(){
   const area=document.getElementById('navAuthArea');
@@ -1598,22 +1520,7 @@ function buildStores(){
         </div>
         <!-- MAP SEBELUM REVIEW FORM -->
        <div class="store-map-area" onclick="event.stopPropagation()">
-
-  <div style="
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:8px;
-  ">
-    <div class="store-map-area-label">📍 Lokasi Cabang</div>
-
-    <button
-      class="store-map-hide-btn"
-      onclick="toggleReviewMap('${s.id}',event)">
-      Sembunyikan
-    </button>
-  </div>
-
+  <div class="store-map-area-label">📍 Lokasi Cabang</div>
   <div class="store-map-content" id="map-content-${s.id}">
     <div class="store-map-thumb">
       <iframe
@@ -1621,7 +1528,6 @@ function buildStores(){
         loading="lazy">
       </iframe>
     </div>
-
     <a
       class="store-map-open-btn"
       href="https://maps.google.com/?q=${encodeURIComponent(s.query||s.address||s.name)}"
@@ -1630,7 +1536,6 @@ function buildStores(){
       🗺️ Buka di Google Maps
     </a>
   </div>
-
 </div>
         <!-- REVIEW FORM SETELAH PETA -->
         <div class="comment-form-wrap" onclick="event.stopPropagation()">
