@@ -1323,13 +1323,29 @@ function setCategory(id){
 /* ============================================================
    SECTIONS + GRID
    ============================================================ */
-function buildSections(){
-  const container=document.getElementById('sectionsContainer');
-  CATEGORIES.forEach(cat=>{
-    const sec=document.createElement('div');sec.className='section';sec.id='sec-'+cat.id;
-    sec.innerHTML=`<div class="sec-header"><h2 class="sec-title">${cat.header} <span class="sec-count"></span></h2><button class="sec-link" onclick="setCategory('${cat.id}')">Lihat Semua</button></div><div class="grid" id="grid-${cat.id}"></div>`;
-    container.appendChild(sec);
-  });
+function buildColorFilter(){
+  const colors = Array.from(
+    new Set(
+      PRODUCTS
+        .map(p => p.color)
+        .filter(c => c !== null && c !== undefined && c !== '')
+    )
+  );
+
+  colors.sort((a,b)=>
+    String(COLOR_LABELS[a] || a)
+      .localeCompare(String(COLOR_LABELS[b] || b))
+  );
+
+  document.getElementById('colorFilterGroup').innerHTML =
+    colors.map(c=>{
+      const slug='col-'+c;
+      return `
+      <div class="filter-option">
+        <input type="checkbox" class="f-color" value="${c}" id="${slug}" onchange="applyFilters()">
+        <label for="${slug}">${COLOR_LABELS[c] || c}</label>
+      </div>`;
+    }).join('');
 }
 function buildBrandFilter(){
   const brands=Array.from(new Set(PRODUCTS.map(p=>p.brand))).sort((a,b)=>a.localeCompare(b));
